@@ -247,10 +247,48 @@ function CouchGangOverlay() {
         chrome.runtime.sendMessage({ type: 'SEND_REACTION', emoji });
     }, []);
 
-    if (!isActive) return null;
+    // Always log on every render
+    console.log('[CouchGang Overlay] Rendering, isActive:', isActive);
+
+    // DEBUG: Show a small indicator even when not active to confirm overlay is mounting
+    if (!isActive) {
+        return (
+            <div style={{
+                position: 'fixed',
+                bottom: '10px',
+                left: '10px',
+                background: 'rgba(0,255,0,0.8)',
+                color: 'black',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                zIndex: 2147483647,
+                pointerEvents: 'auto',
+            }}>
+                CouchGang Overlay Loaded (Not in room)
+            </div>
+        );
+    }
 
     return (
         <div className="cg-overlay-root">
+            {/* Debug indicator when active */}
+            <div style={{
+                position: 'fixed',
+                bottom: '10px',
+                left: '10px',
+                background: 'rgba(0,255,0,0.8)',
+                color: 'black',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                zIndex: 2147483647,
+            }}>
+                CouchGang Overlay ACTIVE
+            </div>
+
             {/* Local video bubble */}
             {localStream && (
                 <VideoBubble
