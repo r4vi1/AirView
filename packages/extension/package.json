@@ -8,24 +8,29 @@
         "dev": "plasmo dev",
         "build": "plasmo build",
         "package": "plasmo package",
-        "clean": "rm -rf .plasmo build"
+        "clean": "rm -rf .plasmo build",
+        "test": "vitest run",
+        "test:watch": "vitest"
     },
     "dependencies": {
         "plasmo": "^0.90.5",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
-        "socket.io-client": "^4.8.1",
+        "react-qr-code": "^2.0.15",
         "simple-peer": "^9.11.1",
-        "react-qr-code": "^2.0.15"
+        "socket.io-client": "^4.8.1"
     },
     "devDependencies": {
         "@plasmohq/prettier-plugin-sort-imports": "^4.0.1",
+        "@testing-library/dom": "^10.4.1",
         "@types/chrome": "^0.0.283",
         "@types/react": "^18.3.14",
         "@types/react-dom": "^18.3.2",
         "@types/simple-peer": "^9.11.8",
+        "jsdom": "^27.0.1",
         "prettier": "^3.4.2",
-        "typescript": "^5.7.2"
+        "typescript": "^5.7.2",
+        "vitest": "^3.2.4"
     },
     "manifest": {
         "permissions": [

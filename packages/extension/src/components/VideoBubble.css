@@ -1,0 +1,154 @@
+/**
+ * VideoBubble Styles
+ * Premium FaceTime-style floating video circle
+ */
+
+.cg-video-bubble {
+    position: fixed;
+    border-radius: 50%;
+    overflow: visible;
+    cursor: grab;
+    z-index: 2147483640;
+    user-select: none;
+    -webkit-user-select: none;
+    will-change: transform;
+    transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cg-video-bubble:active,
+.cg-video-bubble.is-dragging {
+    cursor: grabbing;
+}
+
+.cg-video-bubble::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%);
+    z-index: -1;
+}
+
+/* Speaking ring animation */
+.cg-speaking-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 3px solid var(--cg-accent-green, #30D158);
+    animation: cg-pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    pointer-events: none;
+}
+
+.cg-video-bubble.is-speaking {
+    box-shadow:
+        0 0 0 3px var(--cg-accent-green, #30D158),
+        0 8px 32px rgba(48, 209, 88, 0.3);
+}
+
+/* Video element */
+.cg-video-element {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    background: #1c1c1e;
+    transition: opacity 0.3s ease;
+}
+
+/* Placeholder */
+.cg-video-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3a3a3c 0%, #2c2c2e 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cg-initials {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: -0.5px;
+}
+
+/* Muted indicator */
+.cg-muted-indicator {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--cg-accent-red, #FF453A);
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.cg-muted-indicator svg {
+    color: white;
+}
+
+/* Name label */
+.cg-name-label {
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 10px;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.cg-video-bubble:hover .cg-name-label,
+.cg-video-bubble.is-dragging .cg-name-label {
+    opacity: 1;
+}
+
+.cg-name-label span {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: -0.2px;
+}
+
+/* Hover effect */
+.cg-video-bubble:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Press effect */
+.cg-video-bubble:active:not(.is-speaking) {
+    transform: scale(0.95);
+}
+
+/* Dragging state */
+.cg-video-bubble.is-dragging {
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+    z-index: 2147483645;
+}
+
+/* Animation keyframes */
+@keyframes cg-pulse-ring {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+}
