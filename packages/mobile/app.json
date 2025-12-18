@@ -1,0 +1,47 @@
+{
+    "expo": {
+        "name": "AirView",
+        "slug": "airview-mobile",
+        "version": "0.1.0",
+        "orientation": "portrait",
+        "icon": "./assets/icon.png",
+        "userInterfaceStyle": "dark",
+        "newArchEnabled": true,
+        "splash": {
+            "image": "./assets/splash.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#0d0d0f"
+        },
+        "ios": {
+            "supportsTablet": true,
+            "bundleIdentifier": "com.airview.mobile",
+            "infoPlist": {
+                "NSCameraUsageDescription": "AirView needs camera access to stream your video to watch party members.",
+                "NSMicrophoneUsageDescription": "AirView needs microphone access for voice chat during watch parties."
+            }
+        },
+        "android": {
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/adaptive-icon.png",
+                "backgroundColor": "#0d0d0f"
+            },
+            "package": "com.airview.mobile",
+            "permissions": [
+                "CAMERA",
+                "RECORD_AUDIO"
+            ]
+        },
+        "plugins": [
+            "expo-router",
+            [
+                "expo-camera",
+                {
+                    "cameraPermission": "Allow AirView to access your camera for video chat.",
+                    "microphonePermission": "Allow AirView to access your microphone for voice chat.",
+                    "recordAudioAndroid": true
+                }
+            ]
+        ],
+        "scheme": "airview"
+    }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "airview",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "dev:extension": "turbo run dev --filter=@airview/extension",
+    "dev:mobile": "turbo run dev --filter=@airview/mobile",
+    "dev:server": "turbo run dev --filter=@airview/server"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,42 @@
+{
+    "name": "@airview/extension",
+    "displayName": "AirView - Co-Viewing",
+    "version": "0.1.0",
+    "description": "Universal Co-Viewing Extension - Sync Netflix/Prime with friends",
+    "private": true,
+    "scripts": {
+        "dev": "plasmo dev",
+        "build": "plasmo build",
+        "package": "plasmo package",
+        "clean": "rm -rf .plasmo build"
+    },
+    "dependencies": {
+        "plasmo": "^0.90.5",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "socket.io-client": "^4.8.1",
+        "simple-peer": "^9.11.1",
+        "react-qr-code": "^2.0.15"
+    },
+    "devDependencies": {
+        "@plasmohq/prettier-plugin-sort-imports": "^4.0.1",
+        "@types/chrome": "^0.0.283",
+        "@types/react": "^18.3.14",
+        "@types/react-dom": "^18.3.2",
+        "@types/simple-peer": "^9.11.8",
+        "prettier": "^3.4.2",
+        "typescript": "^5.7.2"
+    },
+    "manifest": {
+        "permissions": [
+            "activeTab",
+            "storage",
+            "tabs"
+        ],
+        "host_permissions": [
+            "https://www.netflix.com/*",
+            "https://www.primevideo.com/*",
+            "https://www.amazon.com/*"
+        ]
+    }
+}
