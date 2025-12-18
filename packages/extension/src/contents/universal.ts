@@ -2,9 +2,11 @@
  * Universal Content Script
  * Detects video elements on ANY website and syncs playback
  * Works on Netflix, Prime, Disney+, Hulu, HBO Max, etc.
+ * Includes ad-aware sync with "Waiting for X" indicator
  */
 
 import type { PlasmoCSConfig } from 'plasmo';
+import { AdMonitor, detectPlatform as detectAdPlatform } from '../lib/ad-detector';
 
 export const config: PlasmoCSConfig = {
     // Match ALL websites - we'll detect if there's a video worth syncing
@@ -17,6 +19,8 @@ let video: HTMLVideoElement | null = null;
 let isSyncing = false;  // Prevent feedback loops during sync seeks
 let lastEmittedState = { isPlaying: false, timestamp: 0 };
 let isInRoom = false;
+let adMonitor: AdMonitor | null = null;
+let waitingOverlay: HTMLElement | null = null;
 
 /**
  * Detect the platform from the URL
@@ -55,7 +59,6 @@ const PLATFORM_SELECTORS: Record<string, string[]> = {
 
 /**
  * Find the primary video element on the page
- * Uses platform-specific selectors first, then falls back to generic detection
  */
 function findVideoElement(): HTMLVideoElement | null {
     const platform = detectPlatform();
@@ -71,10 +74,9 @@ function findVideoElement(): HTMLVideoElement | null {
     const videos = Array.from(document.querySelectorAll('video'));
     if (videos.length === 0) return null;
 
-    // Sort by size (largest first) - the main video is usually the biggest
     const sortedVideos = videos
-        .filter(v => v.src || v.querySelector('source'))  // Has a source
-        .filter(v => v.readyState > 0)  // Has loaded something
+        .filter(v => v.src || v.querySelector('source'))
+        .filter(v => v.readyState > 0)
         .sort((a, b) => {
             const areaA = a.videoWidth * a.videoHeight;
             const areaB = b.videoWidth * b.videoHeight;
@@ -86,10 +88,82 @@ function findVideoElement(): HTMLVideoElement | null {
 
 /**
  * Get the current content URL for sharing
- * This is the link friends will use to navigate to the same content
  */
 function getContentUrl(): string {
     return window.location.href;
+}
+
+/**
+ * Create/show waiting overlay
+ */
+function showWaitingOverlay(usersInAd: Array<{ displayName: string; startedAt: number }>) {
+    if (!waitingOverlay) {
+        waitingOverlay = document.createElement('div');
+        waitingOverlay.id = 'airview-waiting-overlay';
+        waitingOverlay.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            z-index: 2147483647;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        `;
+        document.body.appendChild(waitingOverlay);
+    }
+
+    const names = usersInAd.map(u => u.displayName).join(', ');
+    const elapsed = usersInAd.length > 0
+        ? Math.floor((Date.now() - usersInAd[0].startedAt) / 1000)
+        : 0;
+
+    waitingOverlay.innerHTML = `
+        <div style="width: 20px; height: 20px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: airview-spin 1s linear infinite;"></div>
+        <div>
+            <div style="font-weight: 600;">Waiting for ${names} to finish ad</div>
+            <div style="font-size: 12px; opacity: 0.7; margin-top: 4px;">${elapsed}s elapsed</div>
+        </div>
+    `;
+
+    // Add spinner animation
+    if (!document.getElementById('airview-spin-style')) {
+        const style = document.createElement('style');
+        style.id = 'airview-spin-style';
+        style.textContent = `@keyframes airview-spin { to { transform: rotate(360deg); } }`;
+        document.head.appendChild(style);
+    }
+
+    waitingOverlay.style.display = 'flex';
+
+    // Update elapsed time every second
+    const updateInterval = setInterval(() => {
+        if (!waitingOverlay || waitingOverlay.style.display === 'none') {
+            clearInterval(updateInterval);
+            return;
+        }
+        const newElapsed = usersInAd.length > 0
+            ? Math.floor((Date.now() - usersInAd[0].startedAt) / 1000)
+            : 0;
+        const elapsedEl = waitingOverlay.querySelector('div > div:last-child');
+        if (elapsedEl) elapsedEl.textContent = `${newElapsed}s elapsed`;
+    }, 1000);
+}
+
+/**
+ * Hide waiting overlay
+ */
+function hideWaitingOverlay() {
+    if (waitingOverlay) {
+        waitingOverlay.style.display = 'none';
+    }
 }
 
 /**
@@ -98,7 +172,7 @@ function getContentUrl(): string {
 function emitPlaybackUpdate(isPlaying: boolean, timestamp: number) {
     if (!isInRoom) return;
 
-    // Debounce: Don't emit if state hasn't changed meaningfully
+    // Debounce
     if (
         lastEmittedState.isPlaying === isPlaying &&
         Math.abs(lastEmittedState.timestamp - timestamp) < 0.5
@@ -130,20 +204,55 @@ function handleSyncState(playback: { isPlaying: boolean; timestamp: number }) {
     const currentTime = video.currentTime;
     const drift = Math.abs(currentTime - playback.timestamp);
 
-    // Seek if drift > 2 seconds
     if (drift > 2) {
         console.log(`[AirView] Drift correction: ${drift.toFixed(2)}s, seeking to ${playback.timestamp}`);
         video.currentTime = playback.timestamp;
     }
 
-    // Sync play/pause state
     if (playback.isPlaying && video.paused) {
-        video.play().catch(() => {/* Autoplay might be blocked */ });
+        video.play().catch(() => { });
     } else if (!playback.isPlaying && !video.paused) {
         video.pause();
     }
 
-    // Reset sync flag after a short delay to allow events to settle
+    setTimeout(() => {
+        isSyncing = false;
+    }, 500);
+}
+
+/**
+ * Handle PAUSE_FOR_AD from server
+ */
+function handlePauseForAd(payload: { usersInAd: Array<{ displayName: string; startedAt: number }>; resumeTimestamp: number }) {
+    if (!video) return;
+
+    isSyncing = true;
+    video.pause();
+    showWaitingOverlay(payload.usersInAd);
+
+    console.log(`[AirView] Paused for ad - waiting for: ${payload.usersInAd.map(u => u.displayName).join(', ')}`);
+
+    setTimeout(() => {
+        isSyncing = false;
+    }, 500);
+}
+
+/**
+ * Handle RESUME_ALL from server
+ */
+function handleResumeAll(payload: { timestamp: number; isPlaying: boolean }) {
+    if (!video) return;
+
+    isSyncing = true;
+    hideWaitingOverlay();
+
+    video.currentTime = payload.timestamp;
+    if (payload.isPlaying) {
+        video.play().catch(() => { });
+    }
+
+    console.log(`[AirView] Resuming all at ${payload.timestamp}s`);
+
     setTimeout(() => {
         isSyncing = false;
     }, 500);
@@ -173,9 +282,26 @@ function attachVideoListeners(videoEl: HTMLVideoElement) {
         }
     });
 
+    // Start ad monitoring
+    adMonitor = new AdMonitor(
+        (estimatedDuration) => {
+            // Ad started - notify background
+            chrome.runtime.sendMessage({
+                type: 'AD_STARTED',
+                estimatedDuration,
+            });
+        },
+        () => {
+            // Ad ended - notify background
+            chrome.runtime.sendMessage({
+                type: 'AD_FINISHED',
+            });
+        }
+    );
+    adMonitor.start();
+
     console.log(`[AirView] Video element attached on ${detectPlatform()}`);
 
-    // Notify background that we found a video
     chrome.runtime.sendMessage({
         type: 'VIDEO_DETECTED',
         platform: detectPlatform(),
@@ -201,11 +327,19 @@ chrome.runtime.onMessage.addListener((message) => {
 
         case 'ROOM_LEFT':
             isInRoom = false;
+            hideWaitingOverlay();
             console.log('[AirView] Left room, sync inactive');
             break;
 
+        case 'PAUSE_FOR_AD':
+            handlePauseForAd(message);
+            break;
+
+        case 'RESUME_ALL':
+            handleResumeAll(message);
+            break;
+
         case 'GET_VIDEO_STATUS':
-            // Background is asking if we have a video
             chrome.runtime.sendMessage({
                 type: 'VIDEO_STATUS',
                 hasVideo: !!video,
@@ -219,17 +353,15 @@ chrome.runtime.onMessage.addListener((message) => {
 });
 
 /**
- * Initialize: Wait for video element to appear
+ * Initialize
  */
 function init() {
-    // Try to find video immediately
     const videoEl = findVideoElement();
     if (videoEl) {
         attachVideoListeners(videoEl);
         return;
     }
 
-    // If not found, use MutationObserver to wait for it
     const observer = new MutationObserver(() => {
         const videoEl = findVideoElement();
         if (videoEl && !video) {
@@ -245,13 +377,11 @@ function init() {
     console.log(`[AirView] Content script loaded on ${detectPlatform()}, waiting for video element...`);
 }
 
-// Only initialize if the page might have a video
-// This prevents unnecessary overhead on every page
+// Initialize
 const platform = detectPlatform();
 if (platform !== 'unknown' || document.querySelector('video')) {
     init();
 } else {
-    // Even on unknown sites, watch for video elements appearing
     const lazyObserver = new MutationObserver(() => {
         if (document.querySelector('video')) {
             lazyObserver.disconnect();
@@ -264,3 +394,4 @@ if (platform !== 'unknown' || document.querySelector('video')) {
         subtree: true,
     });
 }
+

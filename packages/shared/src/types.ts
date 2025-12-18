@@ -32,7 +32,18 @@ export interface PlaybackState {
     contentId?: string;
 }
 
-export type StreamingPlatform = 'netflix' | 'prime' | 'unknown';
+export type StreamingPlatform =
+    | 'netflix'
+    | 'prime'
+    | 'disney'
+    | 'hulu'
+    | 'hbomax'
+    | 'youtube'
+    | 'hotstar'
+    | 'jiocinema'
+    | 'sonyliv'
+    | 'zee5'
+    | 'unknown';
 
 // ============================================
 // WebRTC Signaling Types
@@ -71,4 +82,31 @@ export interface QRCodeData {
     roomId: string;
     serverUrl: string;
     expiresAt: number;
+}
+
+// ============================================
+// Ad Sync Types
+// ============================================
+
+export interface AdState {
+    usersInAd: string[];           // User IDs currently watching ads
+    resumeTimestamp: number;        // Where to resume when all clear
+    resumeIsPlaying: boolean;       // Was playing before ads?
+}
+
+export interface AdUserInfo {
+    oderId: string;
+    displayName: string;
+    estimatedDuration?: number;     // If we can detect ad length
+    startedAt: number;
+}
+
+export interface PauseForAdPayload {
+    usersInAd: AdUserInfo[];
+    resumeTimestamp: number;
+}
+
+export interface ResumeAllPayload {
+    timestamp: number;
+    isPlaying: boolean;
 }

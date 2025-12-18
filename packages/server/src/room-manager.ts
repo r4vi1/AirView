@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { RoomState, Participant, PlaybackState, StreamingPlatform } from './types.js';
+import type { RoomState, Participant, PlaybackState, StreamingPlatform, AdState, AdUserInfo } from './types.js';
 
 export class RoomManager {
     private rooms: Map<string, RoomState> = new Map();
@@ -34,6 +34,11 @@ export class RoomManager {
                 timestamp: 0,
                 updatedAt: Date.now(),
                 platform: 'unknown',
+            },
+            adState: {
+                usersInAd: new Map(),
+                resumeTimestamp: 0,
+                resumeIsPlaying: false,
             },
             createdAt: Date.now(),
         };
@@ -144,5 +149,97 @@ export class RoomManager {
     private generateRoomId(): string {
         // Generate 6 character alphanumeric ID
         return uuidv4().substring(0, 6).toUpperCase();
+    }
+
+    // ============================================
+    // Ad State Management
+    // ============================================
+
+    /**
+     * Mark a user as watching an ad
+     * Returns: list of users NOT in ads (who should be paused)
+     */
+    startAd(
+        roomId: string,
+        socketId: string,
+        displayName: string,
+        estimatedDuration?: number
+    ): { usersToPause: string[]; isFirstAd: boolean } | null {
+        const room = this.rooms.get(roomId);
+        if (!room) return null;
+
+        const isFirstAd = room.adState.usersInAd.size === 0;
+
+        // If first ad, store the resume point
+        if (isFirstAd) {
+            room.adState.resumeTimestamp = room.playback.timestamp;
+            room.adState.resumeIsPlaying = room.playback.isPlaying;
+        }
+
+        // Add user to ad set
+        room.adState.usersInAd.set(socketId, {
+            oderId: socketId,
+            displayName,
+            estimatedDuration,
+            startedAt: Date.now(),
+        });
+
+        // Find users NOT in ads (they should pause)
+        const usersToPause = Object.keys(room.participants).filter(
+            (id) => !room.adState.usersInAd.has(id) && id !== socketId
+        );
+
+        return { usersToPause, isFirstAd };
+    }
+
+    /**
+     * Mark a user as finished with their ad
+     * Returns: whether all users are clear of ads
+     */
+    endAd(roomId: string, socketId: string): {
+        allClear: boolean;
+        resumeTimestamp: number;
+        resumeIsPlaying: boolean;
+    } | null {
+        const room = this.rooms.get(roomId);
+        if (!room) return null;
+
+        // Remove user from ad set
+        room.adState.usersInAd.delete(socketId);
+
+        const allClear = room.adState.usersInAd.size === 0;
+
+        return {
+            allClear,
+            resumeTimestamp: room.adState.resumeTimestamp,
+            resumeIsPlaying: room.adState.resumeIsPlaying,
+        };
+    }
+
+    /**
+     * Check if everyone is clear of ads
+     */
+    isEveryoneClearOfAds(roomId: string): boolean {
+        const room = this.rooms.get(roomId);
+        if (!room) return true;
+        return room.adState.usersInAd.size === 0;
+    }
+
+    /**
+     * Get list of users currently in ads
+     */
+    getAdUsers(roomId: string): AdUserInfo[] {
+        const room = this.rooms.get(roomId);
+        if (!room) return [];
+        return Array.from(room.adState.usersInAd.values());
+    }
+
+    /**
+     * Get participant display name
+     */
+    getParticipantName(roomId: string, socketId: string): string {
+        const room = this.rooms.get(roomId);
+        if (!room) return 'Unknown';
+        return room.participants[socketId]?.displayName || 'User';
     }
 }

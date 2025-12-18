@@ -17,6 +17,7 @@ export interface RoomState {
     hostId: string;
     participants: Record<string, Participant>;
     playback: PlaybackState;
+    adState: AdState;
     createdAt: number;
 }
 
@@ -28,7 +29,18 @@ export interface PlaybackState {
     contentId?: string;
 }
 
-export type StreamingPlatform = 'netflix' | 'prime' | 'unknown';
+export type StreamingPlatform =
+    | 'netflix'
+    | 'prime'
+    | 'disney'
+    | 'hulu'
+    | 'hbomax'
+    | 'youtube'
+    | 'hotstar'
+    | 'jiocinema'
+    | 'sonyliv'
+    | 'zee5'
+    | 'unknown';
 
 export interface SignalData {
     type: 'offer' | 'answer' | 'candidate';
@@ -41,4 +53,21 @@ export interface RemoteCommand {
     roomId: string;
     senderId: string;
     seekTime?: number;
+}
+
+// ============================================
+// Ad Sync Types
+// ============================================
+
+export interface AdState {
+    usersInAd: Map<string, AdUserInfo>;  // socketId -> info
+    resumeTimestamp: number;
+    resumeIsPlaying: boolean;
+}
+
+export interface AdUserInfo {
+    oderId: string;
+    displayName: string;
+    estimatedDuration?: number;
+    startedAt: number;
 }

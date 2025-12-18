@@ -16,6 +16,8 @@ const EVENTS = {
     PLAYBACK_UPDATE: 'playback_update',
     REMOTE_COMMAND: 'remote_command',
     SIGNAL: 'signal',
+    AD_STARTED: 'ad_started',
+    AD_FINISHED: 'ad_finished',
 
     // Server -> Client
     ROOM_CREATED: 'room_created',
@@ -24,6 +26,9 @@ const EVENTS = {
     PARTICIPANT_JOINED: 'participant_joined',
     PARTICIPANT_LEFT: 'participant_left',
     SYNC_STATE: 'sync_state',
+    PAUSE_FOR_AD: 'pause_for_ad',
+    RESUME_ALL: 'resume_all',
+    AD_STATE_UPDATE: 'ad_state_update',
     ERROR: 'error',
 } as const;
 
@@ -48,6 +53,14 @@ interface PlaybackUpdatePayload {
 interface SignalPayload {
     to: string;
     signal: SignalData;
+}
+
+interface AdStartedPayload {
+    estimatedDuration?: number;
+}
+
+interface AdFinishedPayload {
+    // Empty for now, could add ad duration or other metrics
 }
 
 export function setupSocketHandlers(io: Server, roomManager: RoomManager) {
@@ -155,6 +168,72 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager) {
             io.to(payload.to).emit(EVENTS.SIGNAL, {
                 from: socket.id,
                 signal: payload.signal,
+            });
+        });
+
+        // ========================================
+        // Ad Sync
+        // ========================================
+
+        socket.on(EVENTS.AD_STARTED, (payload: AdStartedPayload) => {
+            const room = roomManager.getRoomBySocket(socket.id);
+            if (!room) return;
+
+            const displayName = roomManager.getParticipantName(room.roomId, socket.id);
+            const result = roomManager.startAd(
+                room.roomId,
+                socket.id,
+                displayName,
+                payload.estimatedDuration
+            );
+
+            if (!result) return;
+
+            // Pause users not in ads
+            if (result.usersToPause.length > 0) {
+                const adUsers = roomManager.getAdUsers(room.roomId);
+                for (const userId of result.usersToPause) {
+                    io.to(userId).emit(EVENTS.PAUSE_FOR_AD, {
+                        usersInAd: adUsers,
+                        resumeTimestamp: room.playback.timestamp,
+                    });
+                }
+            }
+
+            // Broadcast ad state update to all
+            socket.to(room.roomId).emit(EVENTS.AD_STATE_UPDATE, {
+                usersInAd: roomManager.getAdUsers(room.roomId),
+            });
+
+            console.log(`📺 Ad started for ${displayName} in room ${room.roomId}`);
+        });
+
+        socket.on(EVENTS.AD_FINISHED, (_payload: AdFinishedPayload) => {
+            const room = roomManager.getRoomBySocket(socket.id);
+            if (!room) return;
+
+            const result = roomManager.endAd(room.roomId, socket.id);
+            if (!result) return;
+
+            if (result.allClear) {
+                // Everyone is done with ads - resume all!
+                io.to(room.roomId).emit(EVENTS.RESUME_ALL, {
+                    timestamp: result.resumeTimestamp,
+                    isPlaying: result.resumeIsPlaying,
+                });
+                console.log(`▶️ All ads finished in room ${room.roomId}, resuming at ${result.resumeTimestamp}`);
+            } else {
+                // This user finished but others are still in ads
+                // Pause this user until everyone is done
+                socket.emit(EVENTS.PAUSE_FOR_AD, {
+                    usersInAd: roomManager.getAdUsers(room.roomId),
+                    resumeTimestamp: result.resumeTimestamp,
+                });
+            }
+
+            // Broadcast ad state update to all
+            socket.to(room.roomId).emit(EVENTS.AD_STATE_UPDATE, {
+                usersInAd: roomManager.getAdUsers(room.roomId),
             });
         });
 

@@ -24,6 +24,11 @@ const EVENTS = {
     PLAYBACK_UPDATE: 'playback_update',
     SYNC_STATE: 'sync_state',
     SIGNAL: 'signal',
+    // Ad sync
+    AD_STARTED: 'ad_started',
+    AD_FINISHED: 'ad_finished',
+    PAUSE_FOR_AD: 'pause_for_ad',
+    RESUME_ALL: 'resume_all',
 };
 
 /**
@@ -72,6 +77,31 @@ function initSocket(): Socket {
                 chrome.tabs.sendMessage(tabs[0].id, {
                     type: 'SYNC_STATE',
                     playback: data.playback,
+                });
+            }
+        });
+    });
+
+    // Forward ad events to content script
+    socket.on(EVENTS.PAUSE_FOR_AD, (data) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.id) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    type: 'PAUSE_FOR_AD',
+                    usersInAd: data.usersInAd,
+                    resumeTimestamp: data.resumeTimestamp,
+                });
+            }
+        });
+    });
+
+    socket.on(EVENTS.RESUME_ALL, (data) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.id) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    type: 'RESUME_ALL',
+                    timestamp: data.timestamp,
+                    isPlaying: data.isPlaying,
                 });
             }
         });
@@ -151,6 +181,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                     chrome.windows.update(window.id, { state: 'maximized' });
                 }
             });
+            break;
+        }
+
+        // Ad sync - forward to server
+        case 'AD_STARTED': {
+            socket?.emit(EVENTS.AD_STARTED, {
+                estimatedDuration: message.estimatedDuration,
+            });
+            break;
+        }
+
+        case 'AD_FINISHED': {
+            socket?.emit(EVENTS.AD_FINISHED, {});
             break;
         }
     }

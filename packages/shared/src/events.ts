@@ -16,6 +16,10 @@ export const CLIENT_EVENTS = {
     // Playback sync
     PLAYBACK_UPDATE: 'playback_update',
 
+    // Ad sync
+    AD_STARTED: 'ad_started',
+    AD_FINISHED: 'ad_finished',
+
     // Remote control
     REMOTE_COMMAND: 'remote_command',
 
@@ -37,6 +41,11 @@ export const SERVER_EVENTS = {
 
     // Playback sync
     SYNC_STATE: 'sync_state',
+
+    // Ad sync
+    PAUSE_FOR_AD: 'pause_for_ad',
+    RESUME_ALL: 'resume_all',
+    AD_STATE_UPDATE: 'ad_state_update',
 
     // Remote control
     REMOTE_COMMAND: 'remote_command',
