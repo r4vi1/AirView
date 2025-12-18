@@ -29,6 +29,9 @@ const EVENTS = {
     AD_FINISHED: 'ad_finished',
     PAUSE_FOR_AD: 'pause_for_ad',
     RESUME_ALL: 'resume_all',
+    // Chat & reactions
+    CHAT_MESSAGE: 'chat_message',
+    REACTION: 'reaction',
 };
 
 /**
@@ -109,6 +112,42 @@ function initSocket(): Socket {
                     type: 'RESUME_ALL',
                     timestamp: data.timestamp,
                     isPlaying: data.isPlaying,
+                });
+            }
+        });
+    });
+
+    // Chat message from server - forward to content script
+    socket.on(EVENTS.CHAT_MESSAGE, (data) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.id) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    type: 'CHAT_MESSAGE',
+                    ...data,
+                });
+            }
+        });
+    });
+
+    // Reaction from server - forward to content script
+    socket.on(EVENTS.REACTION, (data) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.id) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    type: 'REACTION',
+                    ...data,
+                });
+            }
+        });
+    });
+
+    // Signal for WebRTC - forward to content script
+    socket.on(EVENTS.SIGNAL, (data) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.id) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    type: 'SIGNAL',
+                    ...data,
                 });
             }
         });
@@ -252,6 +291,21 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
         case 'AD_FINISHED': {
             socket?.emit(EVENTS.AD_FINISHED, {});
+            break;
+        }
+
+        // Chat & reactions - forward to server
+        case 'SEND_CHAT': {
+            socket?.emit(EVENTS.CHAT_MESSAGE, {
+                message: message.message,
+            });
+            break;
+        }
+
+        case 'SEND_REACTION': {
+            socket?.emit(EVENTS.REACTION, {
+                emoji: message.emoji,
+            });
             break;
         }
     }

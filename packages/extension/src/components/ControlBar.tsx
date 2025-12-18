@@ -3,17 +3,20 @@
  * macOS Dock-style glassmorphic control bar
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import './ControlBar.css';
 
 export interface ControlBarProps {
     isMuted?: boolean;
     isCameraOn?: boolean;
     isFullscreen?: boolean;
+    isChatOpen?: boolean;
     participantCount?: number;
     onToggleMute?: () => void;
     onToggleCamera?: () => void;
     onToggleFullscreen?: () => void;
+    onToggleChat?: () => void;
+    onOpenReactions?: () => void;
     onEndSession?: () => void;
 }
 
@@ -21,10 +24,13 @@ export function ControlBar({
     isMuted = false,
     isCameraOn = true,
     isFullscreen = false,
+    isChatOpen = false,
     participantCount = 1,
     onToggleMute,
     onToggleCamera,
     onToggleFullscreen,
+    onToggleChat,
+    onOpenReactions,
     onEndSession,
 }: ControlBarProps) {
     const [isHovered, setIsHovered] = useState(false);
@@ -91,6 +97,28 @@ export function ControlBar({
                 )}
             </button>
 
+            <div className="cg-divider" />
+
+            {/* Chat button */}
+            <button
+                className={`cg-control-btn ${isChatOpen ? 'is-active' : ''}`}
+                onClick={onToggleChat}
+                title="Toggle chat"
+            >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+            </button>
+
+            {/* Reactions button */}
+            <button
+                className="cg-control-btn"
+                onClick={onOpenReactions}
+                title="Send reaction"
+            >
+                <span style={{ fontSize: '18px' }}>😊</span>
+            </button>
+
             {/* Fullscreen button */}
             <button
                 className={`cg-control-btn ${isFullscreen ? 'is-active' : ''}`}
@@ -126,3 +154,4 @@ export function ControlBar({
 }
 
 export default ControlBar;
+

@@ -18,6 +18,8 @@ const EVENTS = {
     SIGNAL: 'signal',
     AD_STARTED: 'ad_started',
     AD_FINISHED: 'ad_finished',
+    CHAT_MESSAGE: 'chat_message',
+    REACTION: 'reaction',
 
     // Server -> Client
     ROOM_CREATED: 'room_created',
@@ -241,6 +243,42 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager) {
             // Broadcast ad state update to all
             socket.to(room.roomId).emit(EVENTS.AD_STATE_UPDATE, {
                 usersInAd: roomManager.getAdUsers(room.roomId),
+            });
+        });
+
+        // ========================================
+        // Chat & Reactions
+        // ========================================
+
+        socket.on(EVENTS.CHAT_MESSAGE, (payload: { message: string }) => {
+            const room = roomManager.getRoomBySocket(socket.id);
+            if (!room) return;
+
+            const participant = room.participants[socket.id];
+            const displayName = participant?.displayName || 'Anonymous';
+
+            // Broadcast to all in room including sender
+            io.to(room.roomId).emit(EVENTS.CHAT_MESSAGE, {
+                senderId: socket.id,
+                senderName: displayName,
+                message: payload.message,
+                timestamp: Date.now(),
+            });
+        });
+
+        socket.on(EVENTS.REACTION, (payload: { emoji: string }) => {
+            const room = roomManager.getRoomBySocket(socket.id);
+            if (!room) return;
+
+            const participant = room.participants[socket.id];
+            const displayName = participant?.displayName || 'Anonymous';
+
+            // Broadcast to all in room
+            io.to(room.roomId).emit(EVENTS.REACTION, {
+                senderId: socket.id,
+                senderName: displayName,
+                emoji: payload.emoji,
+                timestamp: Date.now(),
             });
         });
 

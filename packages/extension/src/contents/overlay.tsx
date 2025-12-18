@@ -5,12 +5,16 @@
  */
 
 import type { PlasmoCSConfig, PlasmoGetShadowHostId } from 'plasmo';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { VideoBubble } from '../components/VideoBubble';
 import { ControlBar } from '../components/ControlBar';
+import { ChatPanel, type ChatMessage } from '../components/ChatPanel';
+import { ReactionOverlay, ReactionPicker, type Reaction } from '../components/ReactionOverlay';
 import cssText from 'data-text:../styles/design-tokens.css';
 import videoBubbleCss from 'data-text:../components/VideoBubble.css';
 import controlBarCss from 'data-text:../components/ControlBar.css';
+import chatPanelCss from 'data-text:../components/ChatPanel.css';
+import reactionOverlayCss from 'data-text:../components/ReactionOverlay.css';
 
 // Plasmo configuration
 export const config: PlasmoCSConfig = {
@@ -28,6 +32,8 @@ export const getStyle = () => {
     ${cssText}
     ${videoBubbleCss}
     ${controlBarCss}
+    ${chatPanelCss}
+    ${reactionOverlayCss}
     
     /* Container styles */
     .cg-overlay-root {
@@ -117,6 +123,14 @@ function CouchGangOverlay() {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [waiting, setWaiting] = useState<WaitingState | null>(null);
 
+    // Chat state
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+    // Reactions state
+    const [isReactionPickerOpen, setIsReactionPickerOpen] = useState(false);
+    const [reactions, setReactions] = useState<Reaction[]>([]);
+
     // Listen for messages from background
     useEffect(() => {
         const handleMessage = (message: any) => {
@@ -128,6 +142,7 @@ function CouchGangOverlay() {
                     setIsActive(false);
                     setParticipants([]);
                     setLocalStream(null);
+                    setMessages([]);
                     break;
                 case 'PARTICIPANT_ADDED':
                     setParticipants((prev) => [...prev, message.participant]);
@@ -146,6 +161,23 @@ function CouchGangOverlay() {
                     break;
                 case 'RESUME_ALL':
                     setWaiting(null);
+                    break;
+                case 'CHAT_MESSAGE':
+                    setMessages((prev) => [...prev, {
+                        senderId: message.senderId,
+                        senderName: message.senderName,
+                        message: message.message,
+                        timestamp: message.timestamp,
+                    }]);
+                    break;
+                case 'REACTION':
+                    setReactions((prev) => [...prev, {
+                        id: `${message.senderId}-${message.timestamp}`,
+                        senderId: message.senderId,
+                        senderName: message.senderName,
+                        emoji: message.emoji,
+                        timestamp: message.timestamp,
+                    }]);
                     break;
             }
         };
@@ -168,25 +200,41 @@ function CouchGangOverlay() {
     }, [waiting]);
 
     // Control handlers
-    const handleToggleMute = () => {
+    const handleToggleMute = useCallback(() => {
         setIsMuted((prev) => !prev);
         chrome.runtime.sendMessage({ type: 'TOGGLE_MUTE' });
-    };
+    }, []);
 
-    const handleToggleCamera = () => {
+    const handleToggleCamera = useCallback(() => {
         setIsCameraOn((prev) => !prev);
         chrome.runtime.sendMessage({ type: 'TOGGLE_CAMERA' });
-    };
+    }, []);
 
-    const handleToggleFullscreen = () => {
+    const handleToggleFullscreen = useCallback(() => {
         setIsFullscreen((prev) => !prev);
         chrome.runtime.sendMessage({ type: 'TOGGLE_FULLSCREEN' });
-    };
+    }, []);
 
-    const handleEndSession = () => {
+    const handleEndSession = useCallback(() => {
         chrome.runtime.sendMessage({ type: 'END_SESSION' });
         setIsActive(false);
-    };
+    }, []);
+
+    const handleToggleChat = useCallback(() => {
+        setIsChatOpen((prev) => !prev);
+    }, []);
+
+    const handleOpenReactions = useCallback(() => {
+        setIsReactionPickerOpen((prev) => !prev);
+    }, []);
+
+    const handleSendMessage = useCallback((message: string) => {
+        chrome.runtime.sendMessage({ type: 'SEND_CHAT', message });
+    }, []);
+
+    const handleSendReaction = useCallback((emoji: string) => {
+        chrome.runtime.sendMessage({ type: 'SEND_REACTION', emoji });
+    }, []);
 
     if (!isActive) return null;
 
@@ -222,12 +270,33 @@ function CouchGangOverlay() {
                 isMuted={isMuted}
                 isCameraOn={isCameraOn}
                 isFullscreen={isFullscreen}
+                isChatOpen={isChatOpen}
                 participantCount={participants.length + 1}
                 onToggleMute={handleToggleMute}
                 onToggleCamera={handleToggleCamera}
                 onToggleFullscreen={handleToggleFullscreen}
+                onToggleChat={handleToggleChat}
+                onOpenReactions={handleOpenReactions}
                 onEndSession={handleEndSession}
             />
+
+            {/* Chat panel */}
+            <ChatPanel
+                messages={messages}
+                onSendMessage={handleSendMessage}
+                isOpen={isChatOpen}
+                onClose={() => setIsChatOpen(false)}
+            />
+
+            {/* Reaction picker */}
+            <ReactionPicker
+                isOpen={isReactionPickerOpen}
+                onSelect={handleSendReaction}
+                onClose={() => setIsReactionPickerOpen(false)}
+            />
+
+            {/* Reaction overlay (floating emojis) */}
+            <ReactionOverlay reactions={reactions} />
 
             {/* Waiting for ad indicator */}
             {waiting && waiting.usersInAd.length > 0 && (
@@ -248,3 +317,4 @@ function CouchGangOverlay() {
 }
 
 export default CouchGangOverlay;
+
