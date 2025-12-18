@@ -54,6 +54,13 @@ function initSocket(): Socket {
     socket.on(EVENTS.ROOM_CREATED, (data) => {
         currentRoom = { roomId: data.roomId, participants: 1 };
         broadcastRoomUpdate();
+
+        // Notify content script that we're now in a room (host)
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.id) {
+                chrome.tabs.sendMessage(tabs[0].id, { type: 'ROOM_JOINED' });
+            }
+        });
     });
 
     socket.on(EVENTS.PARTICIPANT_JOINED, () => {

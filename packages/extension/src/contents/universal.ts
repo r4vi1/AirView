@@ -356,6 +356,14 @@ chrome.runtime.onMessage.addListener((message) => {
  * Initialize
  */
 function init() {
+    // Check if we're in a room on page load
+    chrome.runtime.sendMessage({ type: 'GET_STATUS' }, (response) => {
+        if (response?.roomId) {
+            isInRoom = true;
+            console.log(`[CouchGang] Already in room ${response.roomId}, sync active`);
+        }
+    });
+
     const videoEl = findVideoElement();
     if (videoEl) {
         attachVideoListeners(videoEl);
