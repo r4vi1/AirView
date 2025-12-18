@@ -18,11 +18,11 @@ export type SupportedPlatform =
  * Platform-specific CSS selectors for ad detection
  */
 const AD_SELECTORS: Record<SupportedPlatform, string[]> = {
+    // YouTube: Only use very specific selectors that exist ONLY during ads
+    // The '.ad-showing' class on .html5-video-player is the most reliable
     youtube: [
-        '.ad-showing',
-        '.ytp-ad-player-overlay',
-        '.ytp-ad-text',
-        '[class*="ytp-ad"]',
+        '.html5-video-player.ad-showing',  // Most reliable - on the player container
+        '.ytp-ad-player-overlay-instream-info',  // Visible only during skippable ads
     ],
     prime: [
         '[class*="adPlayer"]',
