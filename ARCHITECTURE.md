@@ -293,6 +293,57 @@ sequenceDiagram
     M-->>D: P2P Video Stream (via STUN/TURN)
 ```
 
+### 4.5 Ad-Aware Sync Flow (NEW)
+
+> [!TIP]
+> This solves the problem of variable-length ads breaking sync between users.
+
+```mermaid
+sequenceDiagram
+    participant A as User A (Ad plays)
+    participant S as Server
+    participant B as User B (No ad)
+    
+    Note over A,B: Both at timestamp 120s
+    A->>A: Ad starts playing
+    A->>S: AD_STARTED { userId: A }
+    S->>S: Add A to usersInAd, store resumeTimestamp=120
+    S->>B: PAUSE_FOR_AD
+    B->>B: video.pause() [feels like A paused]
+    
+    Note over A: Ad finishes (10s later)
+    A->>S: AD_FINISHED { userId: A }
+    S->>S: Remove A from usersInAd
+    S->>S: usersInAd.size === 0?
+    alt All clear
+        S->>A: RESUME_ALL { timestamp: 120 }
+        S->>B: RESUME_ALL { timestamp: 120 }
+        A->>A: video.currentTime=120; video.play()
+        B->>B: video.currentTime=120; video.play()
+    end
+```
+
+**Simultaneous Ads (Both in ads):**
+```mermaid
+sequenceDiagram
+    participant A as User A (10s ad)
+    participant S as Server
+    participant B as User B (15s ad)
+    
+    A->>S: AD_STARTED
+    B->>S: AD_STARTED
+    Note over S: usersInAd = {A, B} - both in ads, no pause needed
+    
+    A->>S: AD_FINISHED (A done first)
+    S->>A: Wait - B still in ad
+    A->>A: video.pause() [waits for B]
+    
+    B->>S: AD_FINISHED
+    Note over S: usersInAd empty!
+    S->>A: RESUME_ALL
+    S->>B: RESUME_ALL
+```
+
 ---
 
 ## 5. Key Technical Artifacts
