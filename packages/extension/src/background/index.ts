@@ -129,15 +129,21 @@ function broadcastRoomUpdate() {
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     switch (message.type) {
         case 'CREATE_ROOM': {
-            const s = initSocket();
-            s.emit(EVENTS.CREATE_ROOM, {
-                userId: `user_${Date.now()}`,
-                displayName: 'Desktop User',
-            });
+            // Get current tab URL to share with room
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                const contentUrl = tabs[0]?.url;
 
-            // Wait for room creation response
-            s.once(EVENTS.ROOM_CREATED, (data) => {
-                sendResponse({ roomId: data.roomId });
+                const s = initSocket();
+                s.emit(EVENTS.CREATE_ROOM, {
+                    userId: `user_${Date.now()}`,
+                    displayName: 'Desktop User',
+                    contentUrl,
+                });
+
+                // Wait for room creation response
+                s.once(EVENTS.ROOM_CREATED, (data) => {
+                    sendResponse({ roomId: data.roomId });
+                });
             });
             return true; // async response
         }
@@ -161,15 +167,25 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             // Wait for join response
             s.once(EVENTS.ROOM_JOINED, (data) => {
                 currentRoom = { roomId: data.roomId, participants: Object.keys(data.room.participants).length };
-                sendResponse({ success: true, roomId: data.roomId });
+                sendResponse({ success: true, roomId: data.roomId, contentUrl: data.room.contentUrl });
                 broadcastRoomUpdate();
 
-                // Notify content script
-                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                    if (tabs[0]?.id) {
-                        chrome.tabs.sendMessage(tabs[0].id, { type: 'ROOM_JOINED' });
-                    }
-                });
+                // If room has a content URL, open it
+                if (data.room.contentUrl) {
+                    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                        if (tabs[0]?.id) {
+                            // Navigate current tab to the content
+                            chrome.tabs.update(tabs[0].id, { url: data.room.contentUrl });
+                        }
+                    });
+                } else {
+                    // Just notify content script if no redirect needed
+                    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                        if (tabs[0]?.id) {
+                            chrome.tabs.sendMessage(tabs[0].id, { type: 'ROOM_JOINED' });
+                        }
+                    });
+                }
             });
 
             s.once('error', (data: { message: string }) => {

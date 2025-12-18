@@ -35,6 +35,7 @@ const EVENTS = {
 interface CreateRoomPayload {
     userId: string;
     displayName?: string;
+    contentUrl?: string;  // URL of content being watched
 }
 
 interface JoinRoomPayload {
@@ -72,9 +73,15 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager) {
         // ========================================
 
         socket.on(EVENTS.CREATE_ROOM, (payload: CreateRoomPayload) => {
-            const { userId, displayName } = payload;
+            const { userId, displayName, contentUrl } = payload;
 
             const room = roomManager.createRoom(socket.id, userId, displayName);
+
+            // Store content URL if provided
+            if (contentUrl) {
+                room.contentUrl = contentUrl;
+            }
+
             socket.join(room.roomId);
 
             socket.emit(EVENTS.ROOM_CREATED, {
@@ -82,7 +89,7 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager) {
                 room,
             });
 
-            console.log(`📦 Room created: ${room.roomId} by ${socket.id}`);
+            console.log(`📦 Room created: ${room.roomId} by ${socket.id}${contentUrl ? ` (${contentUrl})` : ''}`);
         });
 
         socket.on(EVENTS.JOIN_ROOM, (payload: JoinRoomPayload) => {

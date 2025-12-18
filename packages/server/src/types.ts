@@ -18,6 +18,7 @@ export interface RoomState {
     participants: Record<string, Participant>;
     playback: PlaybackState;
     adState: AdState;
+    contentUrl?: string;  // URL of the content being watched
     createdAt: number;
 }
 
