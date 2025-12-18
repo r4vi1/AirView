@@ -131,12 +131,23 @@ function CouchGangOverlay() {
     const [isReactionPickerOpen, setIsReactionPickerOpen] = useState(false);
     const [reactions, setReactions] = useState<Reaction[]>([]);
 
+    // Check room status on mount (for page reloads/navigations)
+    useEffect(() => {
+        chrome.runtime.sendMessage({ type: 'GET_STATUS' }, (response) => {
+            if (response?.roomId) {
+                setIsActive(true);
+                console.log('[CouchGang Overlay] Activated via GET_STATUS - already in room');
+            }
+        });
+    }, []);
+
     // Listen for messages from background
     useEffect(() => {
         const handleMessage = (message: any) => {
             switch (message.type) {
                 case 'OVERLAY_ACTIVATE':
                     setIsActive(true);
+                    console.log('[CouchGang Overlay] Activated via message');
                     break;
                 case 'OVERLAY_DEACTIVATE':
                     setIsActive(false);
