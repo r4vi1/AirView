@@ -1,4 +1,4 @@
-# AirView - Universal Co-Viewing Ecosystem
+# CouchGang - Universal Co-Viewing Ecosystem
 
 A "Bring Your Own Login" (BYOL) utility that synchronizes playback control signals between users who are logged into their own premium streaming accounts.
 
@@ -6,10 +6,10 @@ A "Bring Your Own Login" (BYOL) utility that synchronizes playback control signa
 
 | Package | Description |
 |---------|-------------|
-| `@airview/extension` | Universal Browser Extension (Plasmo, Manifest V3) |
-| `@airview/mobile` | React Native (Expo) Social Remote companion app |
-| `@airview/server` | Node.js + Socket.io signaling server |
-| `@airview/shared` | Shared TypeScript types and utilities |
+| `@couchgang/extension` | Universal Browser Extension (Plasmo, Manifest V3) |
+| `@couchgang/mobile` | React Native (Expo) Social Remote companion app |
+| `@couchgang/server` | Node.js + Socket.io signaling server |
+| `@couchgang/shared` | Shared TypeScript types and utilities |
 
 ## Quick Start
 

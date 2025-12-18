@@ -178,7 +178,7 @@ export class AdMonitor {
             this.checkForAds();
         }, this.checkInterval);
 
-        console.log(`[AirView AdMonitor] Started on ${this.platform}`);
+        console.log(`[CouchGang AdMonitor] Started on ${this.platform}`);
     }
 
     stop() {
@@ -196,12 +196,12 @@ export class AdMonitor {
             this.isInAd = true;
             const duration = getEstimatedAdDuration(this.platform);
             this.onAdStart(duration);
-            console.log(`[AirView AdMonitor] Ad started, estimated duration: ${duration}ms`);
+            console.log(`[CouchGang AdMonitor] Ad started, estimated duration: ${duration}ms`);
         } else if (!adPlaying && this.isInAd) {
             // Ad just ended
             this.isInAd = false;
             this.onAdEnd();
-            console.log('[AirView AdMonitor] Ad ended');
+            console.log('[CouchGang AdMonitor] Ad ended');
         }
     }
 

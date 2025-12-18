@@ -1,6 +1,6 @@
 {
-    "name": "@airview/extension",
-    "displayName": "AirView - Co-Viewing",
+    "name": "@couchgang/extension",
+    "displayName": "CouchGang - Co-Viewing",
     "version": "0.1.0",
     "description": "Universal Co-Viewing Extension - Sync Netflix/Prime with friends",
     "private": true,

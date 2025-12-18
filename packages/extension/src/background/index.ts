@@ -1,5 +1,5 @@
 /**
- * AirView Extension Background Service Worker
+ * CouchGang Extension Background Service Worker
  * Manages socket connection and room state
  */
 
@@ -43,11 +43,11 @@ function initSocket(): Socket {
     });
 
     socket.on('connect', () => {
-        console.log('[AirView] Connected to server');
+        console.log('[CouchGang] Connected to server');
     });
 
     socket.on('disconnect', () => {
-        console.log('[AirView] Disconnected from server');
+        console.log('[CouchGang] Disconnected from server');
         currentRoom = null;
     });
 

@@ -1,6 +1,6 @@
 /**
  * Server-side type definitions
- * Mirrors @airview/shared types for server use
+ * Mirrors @couchgang/shared types for server use
  */
 
 export interface Participant {

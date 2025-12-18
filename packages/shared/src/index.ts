@@ -1,5 +1,5 @@
 /**
- * AirView Shared Package
+ * CouchGang Shared Package
  * Re-exports all shared types, events, and constants
  */
 

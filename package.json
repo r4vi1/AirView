@@ -1,5 +1,5 @@
 {
-  "name": "airview",
+  "name": "couchgang",
   "version": "0.1.0",
   "private": true,
   "workspaces": [
@@ -10,9 +10,9 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "clean": "turbo run clean && rm -rf node_modules",
-    "dev:extension": "turbo run dev --filter=@airview/extension",
-    "dev:mobile": "turbo run dev --filter=@airview/mobile",
-    "dev:server": "turbo run dev --filter=@airview/server"
+    "dev:extension": "turbo run dev --filter=@couchgang/extension",
+    "dev:mobile": "turbo run dev --filter=@couchgang/mobile",
+    "dev:server": "turbo run dev --filter=@couchgang/server"
   },
   "devDependencies": {
     "turbo": "^2.3.3",

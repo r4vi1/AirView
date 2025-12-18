@@ -1,7 +1,7 @@
 {
     "expo": {
-        "name": "AirView",
-        "slug": "airview-mobile",
+        "name": "CouchGang",
+        "slug": "couchgang-mobile",
         "version": "0.1.0",
         "orientation": "portrait",
         "icon": "./assets/icon.png",
@@ -14,10 +14,10 @@
         },
         "ios": {
             "supportsTablet": true,
-            "bundleIdentifier": "com.airview.mobile",
+            "bundleIdentifier": "com.couchgang.mobile",
             "infoPlist": {
-                "NSCameraUsageDescription": "AirView needs camera access to stream your video to watch party members.",
-                "NSMicrophoneUsageDescription": "AirView needs microphone access for voice chat during watch parties."
+                "NSCameraUsageDescription": "CouchGang needs camera access to stream your video to watch party members.",
+                "NSMicrophoneUsageDescription": "CouchGang needs microphone access for voice chat during watch parties."
             }
         },
         "android": {
@@ -25,7 +25,7 @@
                 "foregroundImage": "./assets/adaptive-icon.png",
                 "backgroundColor": "#0d0d0f"
             },
-            "package": "com.airview.mobile",
+            "package": "com.couchgang.mobile",
             "permissions": [
                 "CAMERA",
                 "RECORD_AUDIO"
@@ -36,12 +36,12 @@
             [
                 "expo-camera",
                 {
-                    "cameraPermission": "Allow AirView to access your camera for video chat.",
-                    "microphonePermission": "Allow AirView to access your microphone for voice chat.",
+                    "cameraPermission": "Allow CouchGang to access your camera for video chat.",
+                    "microphonePermission": "Allow CouchGang to access your microphone for voice chat.",
                     "recordAudioAndroid": true
                 }
             ]
         ],
-        "scheme": "airview"
+        "scheme": "couchgang"
     }
 }

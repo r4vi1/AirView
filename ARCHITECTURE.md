@@ -1,8 +1,8 @@
-# AirView - Architecture Document
+# CouchGang - Architecture Document
 
 ## 1. Executive Overview
 
-**AirView** (codename: AirWatch) is a Universal Cross-Platform Co-Viewing Ecosystem built on the **"Bring Your Own Login" (BYOL)** philosophy. We synchronize playback control signals—not copyrighted content—between users who are authenticated on their own premium streaming accounts.
+**CouchGang** (codename: AirWatch) is a Universal Cross-Platform Co-Viewing Ecosystem built on the **"Bring Your Own Login" (BYOL)** philosophy. We synchronize playback control signals—not copyrighted content—between users who are authenticated on their own premium streaming accounts.
 
 ```mermaid
 graph TB

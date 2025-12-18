@@ -1,5 +1,5 @@
 /**
- * AirView Shared Constants
+ * CouchGang Shared Constants
  */
 
 export const CONSTANTS = {

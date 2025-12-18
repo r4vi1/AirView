@@ -1,5 +1,5 @@
 /**
- * Root Layout for AirView Mobile App
+ * Root Layout for CouchGang Mobile App
  */
 
 import { Stack } from 'expo-router';
@@ -27,7 +27,7 @@ export default function RootLayout() {
                 <Stack.Screen
                     name="index"
                     options={{
-                        title: 'AirView',
+                        title: 'CouchGang',
                         headerShown: true,
                     }}
                 />

@@ -1,5 +1,5 @@
 /**
- * AirView Signaling Server
+ * CouchGang Signaling Server
  * Handles WebSocket connections for room management and playback sync
  */
 
@@ -41,6 +41,6 @@ setupSocketHandlers(io, roomManager);
 
 // Start server
 httpServer.listen(PORT, () => {
-    console.log(`🚀 AirView Signaling Server running on port ${PORT}`);
+    console.log(`🚀 CouchGang Signaling Server running on port ${PORT}`);
     console.log(`   Health check: http://localhost:${PORT}/health`);
 });

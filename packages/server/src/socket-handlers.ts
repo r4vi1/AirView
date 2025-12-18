@@ -7,7 +7,7 @@ import type { Server, Socket } from 'socket.io';
 import type { RoomManager } from './room-manager.js';
 import type { SignalData, RemoteCommand, StreamingPlatform } from './types.js';
 
-// Event names (should match @airview/shared)
+// Event names (should match @couchgang/shared)
 const EVENTS = {
     // Client -> Server
     CREATE_ROOM: 'create_room',

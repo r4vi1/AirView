@@ -41,7 +41,7 @@ export default function ScanScreen() {
 
             // Validate QR data
             if (!qrData.roomId || !qrData.serverUrl) {
-                Alert.alert('Invalid QR Code', 'This is not a valid AirView room code.');
+                Alert.alert('Invalid QR Code', 'This is not a valid CouchGang room code.');
                 setScanned(false);
                 return;
             }

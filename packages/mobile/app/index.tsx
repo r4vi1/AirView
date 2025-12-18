@@ -1,5 +1,5 @@
 /**
- * Home Screen - Entry point for AirView Mobile
+ * Home Screen - Entry point for CouchGang Mobile
  */
 
 import { View, Text, StyleSheet, Pressable } from 'react-native';
@@ -11,7 +11,7 @@ export default function HomeScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>AirView</Text>
+                <Text style={styles.title}>CouchGang</Text>
                 <Text style={styles.subtitle}>Social Remote</Text>
             </View>
 

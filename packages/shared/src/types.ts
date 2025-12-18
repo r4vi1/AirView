@@ -1,5 +1,5 @@
 /**
- * AirView Shared Types
+ * CouchGang Shared Types
  * Common TypeScript interfaces used across all packages
  */
 

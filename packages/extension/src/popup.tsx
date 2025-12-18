@@ -1,5 +1,5 @@
 /**
- * AirView Extension Popup
+ * CouchGang Extension Popup
  * Main popup UI when clicking the extension icon
  */
 
@@ -55,7 +55,7 @@ function Popup() {
     return (
         <div className="popup-container">
             <header className="popup-header">
-                <h1>AirView</h1>
+                <h1>CouchGang</h1>
                 <span className={`status ${isConnected ? 'connected' : ''}`}>
                     {isConnected ? '● Connected' : '○ Disconnected'}
                 </span>
@@ -80,7 +80,7 @@ function Popup() {
 
                         <div className="qr-container">
                             <QRCode value={qrData} size={140} />
-                            <p className="qr-hint">Scan with AirView mobile app</p>
+                            <p className="qr-hint">Scan with CouchGang mobile app</p>
                         </div>
 
                         <div className="participants">

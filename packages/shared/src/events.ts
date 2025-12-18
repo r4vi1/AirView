@@ -1,5 +1,5 @@
 /**
- * AirView Socket Events
+ * CouchGang Socket Events
  * Centralized event name constants for Socket.io communication
  */
 

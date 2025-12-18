@@ -99,7 +99,7 @@ function getContentUrl(): string {
 function showWaitingOverlay(usersInAd: Array<{ displayName: string; startedAt: number }>) {
     if (!waitingOverlay) {
         waitingOverlay = document.createElement('div');
-        waitingOverlay.id = 'airview-waiting-overlay';
+        waitingOverlay.id = 'couchgang-waiting-overlay';
         waitingOverlay.style.cssText = `
             position: fixed;
             top: 20px;
@@ -126,7 +126,7 @@ function showWaitingOverlay(usersInAd: Array<{ displayName: string; startedAt: n
         : 0;
 
     waitingOverlay.innerHTML = `
-        <div style="width: 20px; height: 20px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: airview-spin 1s linear infinite;"></div>
+        <div style="width: 20px; height: 20px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: couchgang-spin 1s linear infinite;"></div>
         <div>
             <div style="font-weight: 600;">Waiting for ${names} to finish ad</div>
             <div style="font-size: 12px; opacity: 0.7; margin-top: 4px;">${elapsed}s elapsed</div>
@@ -134,10 +134,10 @@ function showWaitingOverlay(usersInAd: Array<{ displayName: string; startedAt: n
     `;
 
     // Add spinner animation
-    if (!document.getElementById('airview-spin-style')) {
+    if (!document.getElementById('couchgang-spin-style')) {
         const style = document.createElement('style');
-        style.id = 'airview-spin-style';
-        style.textContent = `@keyframes airview-spin { to { transform: rotate(360deg); } }`;
+        style.id = 'couchgang-spin-style';
+        style.textContent = `@keyframes couchgang-spin { to { transform: rotate(360deg); } }`;
         document.head.appendChild(style);
     }
 
@@ -190,7 +190,7 @@ function emitPlaybackUpdate(isPlaying: boolean, timestamp: number) {
         contentUrl: getContentUrl(),
     });
 
-    console.log(`[AirView] Emitted: ${isPlaying ? 'PLAY' : 'PAUSE'} @ ${timestamp.toFixed(2)}s`);
+    console.log(`[CouchGang] Emitted: ${isPlaying ? 'PLAY' : 'PAUSE'} @ ${timestamp.toFixed(2)}s`);
 }
 
 /**
@@ -205,7 +205,7 @@ function handleSyncState(playback: { isPlaying: boolean; timestamp: number }) {
     const drift = Math.abs(currentTime - playback.timestamp);
 
     if (drift > 2) {
-        console.log(`[AirView] Drift correction: ${drift.toFixed(2)}s, seeking to ${playback.timestamp}`);
+        console.log(`[CouchGang] Drift correction: ${drift.toFixed(2)}s, seeking to ${playback.timestamp}`);
         video.currentTime = playback.timestamp;
     }
 
@@ -230,7 +230,7 @@ function handlePauseForAd(payload: { usersInAd: Array<{ displayName: string; sta
     video.pause();
     showWaitingOverlay(payload.usersInAd);
 
-    console.log(`[AirView] Paused for ad - waiting for: ${payload.usersInAd.map(u => u.displayName).join(', ')}`);
+    console.log(`[CouchGang] Paused for ad - waiting for: ${payload.usersInAd.map(u => u.displayName).join(', ')}`);
 
     setTimeout(() => {
         isSyncing = false;
@@ -251,7 +251,7 @@ function handleResumeAll(payload: { timestamp: number; isPlaying: boolean }) {
         video.play().catch(() => { });
     }
 
-    console.log(`[AirView] Resuming all at ${payload.timestamp}s`);
+    console.log(`[CouchGang] Resuming all at ${payload.timestamp}s`);
 
     setTimeout(() => {
         isSyncing = false;
@@ -300,7 +300,7 @@ function attachVideoListeners(videoEl: HTMLVideoElement) {
     );
     adMonitor.start();
 
-    console.log(`[AirView] Video element attached on ${detectPlatform()}`);
+    console.log(`[CouchGang] Video element attached on ${detectPlatform()}`);
 
     chrome.runtime.sendMessage({
         type: 'VIDEO_DETECTED',
@@ -322,13 +322,13 @@ chrome.runtime.onMessage.addListener((message) => {
 
         case 'ROOM_JOINED':
             isInRoom = true;
-            console.log('[AirView] Joined room, sync active');
+            console.log('[CouchGang] Joined room, sync active');
             break;
 
         case 'ROOM_LEFT':
             isInRoom = false;
             hideWaitingOverlay();
-            console.log('[AirView] Left room, sync inactive');
+            console.log('[CouchGang] Left room, sync inactive');
             break;
 
         case 'PAUSE_FOR_AD':
@@ -374,7 +374,7 @@ function init() {
         subtree: true,
     });
 
-    console.log(`[AirView] Content script loaded on ${detectPlatform()}, waiting for video element...`);
+    console.log(`[CouchGang] Content script loaded on ${detectPlatform()}, waiting for video element...`);
 }
 
 // Initialize
