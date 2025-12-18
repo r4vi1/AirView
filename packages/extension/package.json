@@ -36,7 +36,18 @@
         "host_permissions": [
             "https://www.netflix.com/*",
             "https://www.primevideo.com/*",
-            "https://www.amazon.com/*"
+            "https://www.amazon.com/*",
+            "https://www.disneyplus.com/*",
+            "https://www.hulu.com/*",
+            "https://www.max.com/*",
+            "https://www.hbomax.com/*",
+            "https://www.peacocktv.com/*",
+            "https://www.youtube.com/*",
+            "https://www.hotstar.com/*",
+            "https://www.jiocinema.com/*",
+            "https://www.sonyliv.com/*",
+            "https://www.zee5.com/*",
+            "https://*/*"
         ]
     }
 }
