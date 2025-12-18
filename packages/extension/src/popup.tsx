@@ -11,15 +11,42 @@ function Popup() {
     const [roomId, setRoomId] = useState<string | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [participants, setParticipants] = useState<number>(0);
+    const [joinCode, setJoinCode] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [isJoining, setIsJoining] = useState(false);
 
     const serverUrl = 'http://localhost:3001';
 
     const createRoom = async () => {
-        // Send message to background script to create room
+        setError(null);
         chrome.runtime.sendMessage({ type: 'CREATE_ROOM' }, (response) => {
             if (response?.roomId) {
                 setRoomId(response.roomId);
                 setIsConnected(true);
+            } else {
+                setError('Failed to create room. Is the server running?');
+            }
+        });
+    };
+
+    const joinRoom = async () => {
+        if (!joinCode.trim()) {
+            setError('Please enter a room code');
+            return;
+        }
+        setError(null);
+        setIsJoining(true);
+
+        chrome.runtime.sendMessage({
+            type: 'JOIN_ROOM',
+            roomId: joinCode.toUpperCase().trim()
+        }, (response) => {
+            setIsJoining(false);
+            if (response?.success) {
+                setRoomId(joinCode.toUpperCase().trim());
+                setIsConnected(true);
+            } else {
+                setError(response?.error || 'Room not found');
             }
         });
     };
@@ -28,6 +55,7 @@ function Popup() {
         chrome.runtime.sendMessage({ type: 'LEAVE_ROOM' });
         setRoomId(null);
         setIsConnected(false);
+        setJoinCode('');
     };
 
     // Listen for updates from background
@@ -65,11 +93,39 @@ function Popup() {
                 {!isConnected ? (
                     <div className="action-section">
                         <p className="description">
-                            Start a watch party and invite friends to join!
+                            Watch together with friends in sync!
                         </p>
+
+                        {/* Create Room */}
                         <button className="btn-primary" onClick={createRoom}>
                             Create Room
                         </button>
+
+                        <div className="divider">
+                            <span>or join a friend's room</span>
+                        </div>
+
+                        {/* Join Room */}
+                        <div className="join-section">
+                            <input
+                                type="text"
+                                className="room-input"
+                                placeholder="Enter room code"
+                                value={joinCode}
+                                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                                onKeyDown={(e) => e.key === 'Enter' && joinRoom()}
+                                maxLength={6}
+                            />
+                            <button
+                                className="btn-secondary"
+                                onClick={joinRoom}
+                                disabled={isJoining}
+                            >
+                                {isJoining ? 'Joining...' : 'Join'}
+                            </button>
+                        </div>
+
+                        {error && <p className="error-message">{error}</p>}
                     </div>
                 ) : (
                     <div className="room-section">
@@ -102,3 +158,4 @@ function Popup() {
 }
 
 export default Popup;
+

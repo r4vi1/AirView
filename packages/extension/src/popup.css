@@ -169,3 +169,84 @@ body {
   color: var(--text-secondary);
   font-size: 0.7rem;
 }
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.divider span {
+  flex: 1;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  position: relative;
+}
+
+.divider span::before,
+.divider span::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background: var(--border);
+}
+
+.divider span::before {
+  left: 0;
+}
+
+.divider span::after {
+  right: 0;
+}
+
+/* Join Section */
+.join-section {
+  display: flex;
+  gap: 8px;
+}
+
+.room-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.room-input::placeholder {
+  color: var(--text-secondary);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.room-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.join-section .btn-secondary {
+  width: auto;
+  padding: 12px 20px;
+}
+
+/* Error Message */
+.error-message {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #ef4444;
+  font-size: 0.8rem;
+  text-align: center;
+}

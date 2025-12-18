@@ -149,6 +149,41 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             break;
         }
 
+        case 'JOIN_ROOM': {
+            const s = initSocket();
+            s.emit(EVENTS.JOIN_ROOM, {
+                roomId: message.roomId,
+                userId: `user_${Date.now()}`,
+                deviceType: 'desktop',
+                displayName: 'Desktop User',
+            });
+
+            // Wait for join response
+            s.once(EVENTS.ROOM_JOINED, (data) => {
+                currentRoom = { roomId: data.roomId, participants: Object.keys(data.room.participants).length };
+                sendResponse({ success: true, roomId: data.roomId });
+                broadcastRoomUpdate();
+
+                // Notify content script
+                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                    if (tabs[0]?.id) {
+                        chrome.tabs.sendMessage(tabs[0].id, { type: 'ROOM_JOINED' });
+                    }
+                });
+            });
+
+            s.once('error', (data: { message: string }) => {
+                sendResponse({ success: false, error: data.message });
+            });
+
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                sendResponse({ success: false, error: 'Connection timeout' });
+            }, 5000);
+
+            return true; // async response
+        }
+
         case 'GET_STATUS': {
             sendResponse({
                 roomId: currentRoom?.roomId,
