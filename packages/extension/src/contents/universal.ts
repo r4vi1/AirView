@@ -7,6 +7,7 @@
 
 import type { PlasmoCSConfig } from 'plasmo';
 import { AdMonitor, detectPlatform as detectAdPlatform } from '../lib/ad-detector';
+import { SyncManager, type SyncStatus } from '../lib/sync-manager';
 
 export const config: PlasmoCSConfig = {
     // Match ALL websites - we'll detect if there's a video worth syncing
@@ -21,6 +22,8 @@ let lastEmittedState = { isPlaying: false, timestamp: 0 };
 let isInRoom = false;
 let adMonitor: AdMonitor | null = null;
 let waitingOverlay: HTMLElement | null = null;
+let syncManager: SyncManager | null = null;
+let currentSyncStatus: SyncStatus = 'paused';
 
 /**
  * Detect the platform from the URL
@@ -194,9 +197,20 @@ function emitPlaybackUpdate(isPlaying: boolean, timestamp: number) {
 }
 
 /**
- * Handle sync state from server
+ * Handle sync state from server (using improved SyncManager)
  */
-function handleSyncState(playback: { isPlaying: boolean; timestamp: number }) {
+function handleSyncState(playback: { isPlaying: boolean; timestamp: number; serverTime?: number }) {
+    // Use SyncManager if available
+    if (syncManager) {
+        syncManager.handleServerState({
+            isPlaying: playback.isPlaying,
+            timestamp: playback.timestamp,
+            serverTime: playback.serverTime || Date.now(),
+        });
+        return;
+    }
+
+    // Fallback to old logic if SyncManager not initialized
     if (!video || isSyncing) return;
 
     isSyncing = true;
@@ -282,6 +296,30 @@ function attachVideoListeners(videoEl: HTMLVideoElement) {
         }
     });
 
+    // Initialize SyncManager for improved sync with buffering handling
+    syncManager = new SyncManager({
+        onEmitUpdate: (isPlaying, timestamp) => {
+            chrome.runtime.sendMessage({
+                type: 'PLAYBACK_UPDATE',
+                isPlaying,
+                timestamp,
+                platform: detectPlatform(),
+                contentUrl: getContentUrl(),
+            });
+        },
+        onSyncStatus: (status) => {
+            currentSyncStatus = status;
+            // Could display status in UI if needed
+            console.log(`[CouchGang] Sync status: ${status}`);
+        },
+    });
+    syncManager.attach(videoEl);
+
+    // Activate sync if already in a room
+    if (isInRoom) {
+        syncManager.activate();
+    }
+
     // Start ad monitoring
     adMonitor = new AdMonitor(
         (estimatedDuration) => {
@@ -322,11 +360,17 @@ chrome.runtime.onMessage.addListener((message) => {
 
         case 'ROOM_JOINED':
             isInRoom = true;
+            if (syncManager) {
+                syncManager.activate();
+            }
             console.log('[CouchGang] Joined room, sync active');
             break;
 
         case 'ROOM_LEFT':
             isInRoom = false;
+            if (syncManager) {
+                syncManager.deactivate();
+            }
             hideWaitingOverlay();
             console.log('[CouchGang] Left room, sync inactive');
             break;

@@ -142,8 +142,12 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager) {
 
             if (playback) {
                 // Broadcast to all OTHER participants in room
+                // Include server time for latency compensation
                 socket.to(room.roomId).emit(EVENTS.SYNC_STATE, {
-                    playback,
+                    playback: {
+                        ...playback,
+                        serverTime: Date.now(),
+                    },
                     senderId: socket.id,
                 });
             }
