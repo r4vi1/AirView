@@ -59,9 +59,11 @@ function initSocket(): Socket {
         broadcastRoomUpdate();
 
         // Notify content script that we're now in a room (host)
+        // AND activate the overlay
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (tabs[0]?.id) {
                 chrome.tabs.sendMessage(tabs[0].id, { type: 'ROOM_JOINED' });
+                chrome.tabs.sendMessage(tabs[0].id, { type: 'OVERLAY_ACTIVATE' });
             }
         });
     });
@@ -216,12 +218,26 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 sendResponse({ success: true, roomId: data.roomId, contentUrl: data.room.contentUrl });
                 broadcastRoomUpdate();
 
-                // If room has a content URL, open it
+                // If room has a content URL, open it and then activate overlay
                 if (data.room.contentUrl) {
                     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                         if (tabs[0]?.id) {
+                            const tabId = tabs[0].id;
                             // Navigate current tab to the content
-                            chrome.tabs.update(tabs[0].id, { url: data.room.contentUrl });
+                            chrome.tabs.update(tabId, { url: data.room.contentUrl });
+
+                            // Listen for page load to complete, then activate overlay
+                            const onCompleted = (details: chrome.webNavigation.WebNavigationFramedCallbackDetails) => {
+                                if (details.tabId === tabId && details.frameId === 0) {
+                                    chrome.webNavigation.onCompleted.removeListener(onCompleted);
+                                    // Small delay for content script to initialize
+                                    setTimeout(() => {
+                                        chrome.tabs.sendMessage(tabId, { type: 'ROOM_JOINED' });
+                                        chrome.tabs.sendMessage(tabId, { type: 'OVERLAY_ACTIVATE' });
+                                    }, 500);
+                                }
+                            };
+                            chrome.webNavigation.onCompleted.addListener(onCompleted);
                         }
                     });
                 } else {
@@ -229,6 +245,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                         if (tabs[0]?.id) {
                             chrome.tabs.sendMessage(tabs[0].id, { type: 'ROOM_JOINED' });
+                            chrome.tabs.sendMessage(tabs[0].id, { type: 'OVERLAY_ACTIVATE' });
                         }
                     });
                 }

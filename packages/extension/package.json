@@ -36,7 +36,8 @@
         "permissions": [
             "activeTab",
             "storage",
-            "tabs"
+            "tabs",
+            "webNavigation"
         ],
         "host_permissions": [
             "https://www.netflix.com/*",
